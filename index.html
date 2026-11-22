@@ -52,14 +52,13 @@ button:disabled{opacity:.4}
 const $=s=>document.querySelector(s),e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let D={schools:[]};try{D=JSON.parse(localStorage.getItem('ra1'))||D}catch(_){}
 let fs=null,lastJ={};
-const save=()=>{try{localStorage.setItem('ra1',JSON.stringify(D))}catch(_){alert('Storage is full – try a smaller image.')}
- if(fs)D.schools.forEach(s=>{const j=JSON.stringify(s);if(lastJ[s.id]!==j){lastJ[s.id]=j;fs.collection('schools').doc(s.id).set(s)}})};
+const save=()=>{if(window.persist)return persist()};
 const H=s=>{let h=5381;for(const c of String(s).trim())h=(h*33)^c.charCodeAt(0);return(h>>>0).toString(36)};
 const uid=()=>Math.random().toString(36).slice(2,9);
 const CATS={Nursery:['Baby','Middle','Top'],Primary:[1,2,3,4,5,6,7].map(n=>'P.'+n),Secondary:[1,2,3,4,5,6].map(n=>'S.'+n)};
 const TERMS=['Term 1','Term 2','Term 3'];
 let ui={},ses={};
-const sc=id=>D.schools.find(s=>s.id===id),cur=()=>sc(location.hash.slice(1).split('-')[1]);
+const sc=id=>D.schools.find(s=>s.id===id)||(D.pub||[]).find(s=>s.id===id),cur=()=>sc(location.hash.slice(1).split('-')[1]);
 const go=h=>{location.hash=h.replace(/^#?\/?/,'').replace(/\//g,'-')};addEventListener('hashchange',()=>{ui={};render()});
 const v=i=>($('#'+i)||{}).value||'';
 const av=s=>`<div class=av>${s.b?`<img src="${s.b}" alt="">`:e(s.n.slice(0,2).toUpperCase())}</div>`;
@@ -184,7 +183,6 @@ function dl(){const s=cur();if(s.dp&&(v('de').trim().toLowerCase()!==s.em.trim()
 const FB={apiKey:'AIzaSyC7pZqL8CHUjNyO-_U4uQFhshUVgmeGFHE',authDomain:'ra-cdf4b.firebaseapp.com',projectId:'ra-cdf4b',appId:'1:389205547001:web:88eabdd9f0402750e30f28'};
 function fbInit(){if(!FB.projectId)return;const L=u=>new Promise(r=>{const x=document.createElement('script');x.src=u;x.onload=r;x.onerror=r;document.head.appendChild(x)}),B='https://cdn.jsdelivr.net/npm/firebase@10.12.2/';
  L(B+'firebase-app-compat.js').then(()=>L(B+'firebase-firestore-compat.js')).then(()=>{if(!window.firebase)return;firebase.initializeApp(FB);const f=firebase.firestore();f.collection('schools').onSnapshot(q=>{const R=q.docs.map(d=>d.data());fs=f;if(!R.length&&D.schools.length){save();return}R.forEach(s=>lastJ[s.id]=JSON.stringify(s));D.schools=R;try{localStorage.setItem('ra1',JSON.stringify(D))}catch(_){}if(!/INPUT|TEXTAREA/.test(document.activeElement.tagName))render()})})}
-fbInit();
 </script><script>
 const BASE='https://claude.ai/artifact/Gkj7AMyxiB9ZQaBKthYLb1',lnk=i=>(/claude\.ai/.test(location.host)?BASE:location.href.split('#')[0])+'#s-'+i+'-i';
 function toast(m,bad){const t=document.createElement('div');t.textContent=(bad?'✕ ':'✓ ')+m;t.style.cssText='position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:9;background:var(--fg);color:var(--bg);padding:14px;border-radius:12px;font-weight:700;text-align:center;box-shadow:0 5px 0 var(--mu)';document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
@@ -230,7 +228,7 @@ function ar(s){const r=ui.ps&&s.rep.find(x=>x.stu===ui.ps.id&&x.cls===ui.vc&&x.t
 function al(){const s=cur(),q=(ui.aq||'').toLowerCase();return s.rep.filter(r=>r.s==='approved'&&nm(s,r.stu).toLowerCase().includes(q)).map(r=>`<div class=row onclick="ui.ps=s2('${r.stu}');ui.vc='${r.cls}';ui.vt='${r.t}';ui.vk='${r.cat}';render()"><div><b>${e(nm(s,r.stu))}</b><div class=mu>${r.cls} · ${r.t} · ${e(cn(s,r.cat))}</div></div></div>`).join('')||'<p class=mu>No approved reports yet.</p>'}
 function addC(){const s=cur();if(!v('cn').trim())return toast('Enter a category name',1);s.rc.push({id:uid(),n:v('cn').trim(),f:[],l:''});save();toast('Category added');render()}
 function rmC(i){if(!confirm('Delete this category?'))return;const s=cur();s.rc=s.rc.filter(c=>c.id!==i);s.rep=s.rep.filter(r=>r.cat!==i);save();toast('Category deleted');render()}
-function sd(s){const c=ui.sc;return`<h2>Students</h2>`+tabs(s.cl,'sc')+`<h3>${c||'All learners'}</h3>`+(s.stu.filter(t=>!c||t.c0===c).map(t=>`<div class=row style="cursor:default"><div><b>${e(t.n)}</b><div class=mu>${t.c0}</div></div><button class=x style="margin-left:auto" onclick="delSt('${t.id}')">Delete</button></div>`).join('')||'<p class=mu>No learners yet.</p>')+(c?`<div class=cd><label>Learner name</label><input id=sn><label>Parent passcode (4+ characters, must be unique)</label><input id=sp2><button class=b onclick="addS('${c}')">Register learner</button></div>`:'<p class=mu>Tap a class to add learners.</p>')}
+function sd(s){const c=ui.sc;return`<h2>Students</h2>`+tabs(s.cl,'sc')+`<h3>${c||'All learners'}</h3>`+(s.stu.filter(t=>!c||t.c0===c).map(t=>`<div class=row style="cursor:default"><div><b>${e(t.n)}</b><div class=mu>${t.c0}</div></div><button class=x style="margin-left:auto" onclick="delSt('${t.id}')">Delete</button></div>`).join('')||'<p class=mu>No learners yet.</p>')+(c?`<div class=cd><label>Learner name</label><input id=sn><label>Parent passcode (6+ characters, must be unique)</label><input id=sp2><button class=b onclick="addS('${c}')">Register learner</button></div>`:'<p class=mu>Tap a class to add learners.</p>')}
 function addS(c){const s=cur(),p=v('sp2').trim();if(!v('sn').trim())return toast('Enter the learner name',1);if(p.length<4)return toast('Passcode needs 4+ characters',1);if(s.stu.some(x=>x.c===H(p))||H(p)===s.sp)return toast('That passcode is already used',1);s.stu.push({id:uid(),n:v('sn').trim(),c0:c,c:H(p)});save();toast('Learner registered');render()}
 function delSt(i){if(!confirm('Delete this learner and their reports?'))return;const s=cur();s.stu=s.stu.filter(x=>x.id!==i);s.rep=s.rep.filter(r=>r.stu!==i);save();toast('Learner deleted');render()}
 function chP(){const s=cur();if(!v('p1')&&!v('p2'))return toast('Enter a new password',1);if(v('p1')&&v('p1').length<6)return toast('Passcode needs 6+ characters',1);if(v('p2')&&!strong(v('p2')))return toast('Teachers password: '+WK,1);if(v('p1'))s.sp=H(v('p1'));if(v('p2'))s.tp=H(v('p2'));save();toast('Password saved')}
@@ -261,4 +259,61 @@ async function analyse(){const c=curC(),st=$('#ast');st.textContent='Reading the
  try{const sm=await claude.use('sample');if(!sm)throw 0;fill(await sm.json('This image is a school report card. Return ONLY JSON: {"title":"heading of the results table, without school name","head":["learner detail labels other than name, class and term"],"cols":["column headings after the Subject column"],"rows":["subject names in order"],"sum":[{"l":"label of each summary row below the table","t":"sum if total marks, count if number of subjects, avg if average, otherwise empty"}]}. Ignore school name, badge, address and the learner\u2019s name, class and term.',{images:[bl(c.l)]}));st.textContent='Read with Claude. Check the boxes, then Save layout.';toast('Layout analysed')}
  catch(_){st.textContent='';toast('Could not read this image here. Type the structure below.',1)}}
 render();
+</script><script>
+/* v4: Firebase sign-in + database rules */
+const ADM='digitalmall2036@gmail.com';let A=null,me=null,SEC=null,un=null;D={schools:[],pub:[]};try{localStorage.removeItem('ra1')}catch(_){}
+const er=x=>{console.error(x);if(x&&x.code==='permission-denied')toast('Not allowed by the database rules',1)},rr=()=>{if(!/INPUT|TEXTAREA/.test((document.activeElement||{}).tagName||''))render()};
+const sha=async t=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+const authMsg=x=>x&&x.code==='auth/too-many-requests'?'Too many attempts. Try later.':'Login failed: email or password not known';
+const sj={},pj={},cj={};
+function persist(){if(!fs||!me)return Promise.resolve();const ad=(me.email||'').toLowerCase()===ADM,P=[];D.schools.forEach(s=>{if(!s.members)return;const j=JSON.stringify(s);if(sj[s.id]!==j){sj[s.id]=j;P.push(fs.collection('schools').doc(s.id).set(s).catch(er))}
+ if(ad||me.uid===s.own){const p={id:s.id,n:s.n,b:s.b,cl:s.cl,status:s.status,sp:s.sp,own:s.own},q=JSON.stringify(p);if(pj[s.id]!==q){pj[s.id]=q;P.push(fs.collection('pub').doc(s.id).set(p).catch(er))}caps(s)}});return Promise.all(P)}
+async function caps(s){if(me.uid!==s.own)return;const rc=s.rc.map(c=>({id:c.id,n:c.n,L:LY(c)}));for(const t of s.stu){if(!t.k)continue;const doc={sid:s.id,n:s.n,b:s.b,rc,stu:{id:t.id,n:t.n},rep:s.rep.filter(r=>r.stu===t.id&&r.s==='approved')},j=JSON.stringify(doc);if(cj[t.k]!==j){cj[t.k]=j;fs.collection('cap').doc(s.id+'_'+t.k).set(doc).catch(er)}}}
+function watch(){un&&un();un=null;if(!me){D.schools=[];return}const c=fs.collection('schools'),q=(me.email||'').toLowerCase()===ADM?c:c.where('members','array-contains',me.uid);un=q.onSnapshot(s=>{D.schools=s.docs.map(d=>d.data());D.schools.forEach(x=>sj[x.id]=JSON.stringify(x));rr()},er)}
+function fbStart(){const B='https://cdn.jsdelivr.net/npm/firebase@10.12.2/',L=u=>new Promise(r=>{const x=document.createElement('script');x.src=u;x.onload=r;x.onerror=r;document.head.appendChild(x)});
+ L(B+'firebase-app-compat.js').then(()=>L(B+'firebase-auth-compat.js')).then(()=>L(B+'firebase-firestore-compat.js')).then(()=>{if(!window.firebase||!firebase.firestore)return;firebase.initializeApp(FB);A=firebase.auth();fs=firebase.firestore();
+ fs.collection('pub').onSnapshot(q=>{D.pub=q.docs.map(d=>d.data());D.ld=1;rr()},er);A.onAuthStateChanged(u=>{me=u;watch();rr()})})}
+setTimeout(()=>{D.ld=1;render()},6000);
+const _r=render;render=function(){if(!D.ld&&/^#s-/.test(location.hash)){$('#app').innerHTML='<main><p class=mu style="padding-top:40px">Loading…</p></main>';return}_r()};
+/* home */
+function hq(x){ui.q=x;$('#list').innerHTML=lst()}
+function lst(){const q=(ui.q||'').toLowerCase().trim(),L=(D.pub||[]).filter(s=>s.status==='approved'&&s.n.toLowerCase().includes(q));return L.map(s=>`<div class=row onclick="go('#/s/${s.id}/p')">${av(s)}<b>${e(s.n)}</b></div>`).join('')+(q&&!L.length?`<p class=mu>No registered school found for “${e(ui.q)}”.</p><button class=b3 onclick="go('#/reg')">Register school</button>`:'')}
+const _home=home;home=function(){return(fs||!D.ld?'':'<div class=cd><b>Not connected.</b> Open the app’s web link to use the shared database.</div>')+_home()+'<p style="text-align:center"><a href="#admin" style="color:var(--mu)">Admin</a></p>'};
+/* school page wrapper */
+const _sch=sch;sch=function(s,b){if(ui.v==='par'&&ui.ctx)s=ui.ctx;if(!ui.v&&A&&me&&(me.email||'').toLowerCase()!==ADM)A.signOut();if((ui.v==='dash'||ui.v==='td')&&!s.rep)ui.v=null;return _sch(s,b)};
+/* registration */
+function reg(){return`<h2>Register a school</h2><div class=cd><label>School name</label><input id=rn><label>Badge</label><input id=rb type=file accept="image/*"><label>School categories</label><div>${Object.keys(CATS).map(c=>`<label class=ck><input type=checkbox class=rc value="${c}">${c}</label>`).join('')}</div><label>Director email</label><input id=re type=email><label>Director password (${WK})</label><input id=rd type=password><label>School access passcode (6+ characters)</label><input id=rp type=password><button class=b3 onclick="doReg()">Submit for approval</button><button onclick="go('#/')">Cancel</button></div>`}
+async function doReg(){if(!A)return toast('Not connected to the database',1);const n=v('rn').trim(),cs=[...document.querySelectorAll('.rc:checked')].map(x=>x.value),f=$('#rb').files[0],m=v('re').trim().toLowerCase();
+ if(!n||!cs.length)return toast('Enter the school name and pick a category',1);if(!okE(m))return toast('Enter a valid director email',1);if(!strong(v('rd')))return toast('Director password: '+WK,1);if(v('rp').length<6)return toast('School passcode needs 6+ characters',1);if((D.pub||[]).some(x=>x.n.toLowerCase()===n.toLowerCase()))return toast('A school with this name exists',1);
+ try{const c=await A.createUserWithEmailAndPassword(m,v('rd'));me=c.user;D.schools=[{id:uid(),n,b:f?await img(f,120):'',cl:cs.flatMap(c=>CATS[c]),em:m,own:me.uid,members:[me.uid],sp:H(v('rp')),status:'pending',tc:[],rc:[],stu:[],rep:[]}];await persist();await A.signOut();toast('School registered. Waiting for admin approval.');go('#/')}
+ catch(x){toast(x.code==='auth/email-already-in-use'?'That email already has an account':'Registration failed',1)}}
+/* logins */
+async function acc(){const s=cur(),code=v('ac');if(locked()||!code.trim())return;if(H(code)===s.sp){ui.v='dl';toast('Passcode accepted');return render()}
+ try{const k=await sha(s.id+':'+code.trim()),d=await fs.collection('cap').doc(s.id+'_'+k).get();if(d.exists){const c=d.data();ui.ctx={id:c.sid,n:c.n,b:c.b,status:'approved',cl:[],tc:[],rc:c.rc.map(x=>({id:x.id,n:x.n,L:x.L,f:[],l:''})),stu:[c.stu],rep:c.rep};ui.ps=c.stu;ui.v='par';toast('Login successful');return render()}}catch(x){er(x)}bad('Login failed: passcode not known')}
+function fg(i){const m=v(i).trim();if(!okE(m))return toast('Type your email first',1);A.sendPasswordResetEmail(m).then(()=>toast('Reset link sent if the email has an account'),er)}
+function dlog(s){return`<h2>Director login</h2><label>Director email</label><input id=de type=email><label>Password</label><input id=dpw type=password><button class=b3 onclick="dl()">Login</button><button onclick="fg('de')">Forgot password</button> <button onclick="ui={};render()">‹ Back</button>`}
+function tlog(s){return`<h2>Teacher login</h2><label>Email</label><input id=le type=email><label>Password</label><input id=lp type=password><button class=b3 onclick="tin()">Login</button><button onclick="fg('le')">Forgot password</button> <button onclick="ui={};render()">‹ Back</button>`}
+tpw=function(s){return tlog(s)};
+async function dl(){if(locked())return;const s0=cur();if(!A)return toast('Not connected to the database',1);
+ try{const c=await A.signInWithEmailAndPassword(v('de').trim(),v('dpw'));me=c.user;const d=await fs.collection('schools').doc(s0.id).get();if(!d.exists||d.data().own!==me.uid)throw{code:'x'};D.schools=D.schools.filter(x=>x.id!==s0.id).concat(d.data());ui.v='dash';ui.sec=null;toast('Login successful');render()}
+ catch(x){if(A.currentUser)await A.signOut();bad(authMsg(x))}}
+async function tin(){if(locked())return;const s0=cur();if(!A)return toast('Not connected to the database',1);
+ try{const c=await A.signInWithEmailAndPassword(v('le').trim(),v('lp'));me=c.user;const d=await fs.collection('schools').doc(s0.id).get(),sd=d.data(),t=sd.tc.find(x=>x.uid===me.uid);if(!t)throw{code:'x'};D.schools=D.schools.filter(x=>x.id!==s0.id).concat(sd);ui.te=t.e;ui.v='td';toast('Login successful');render()}
+ catch(x){if(A.currentUser)await A.signOut();bad(authMsg(x))}}
+/* admin */
+const _adm=adm;adm=function(){return(me&&(me.email||'').toLowerCase()===ADM)?`<button onclick="A.signOut();go('#/')">Log out</button>`+_adm():`<h2>App admin</h2><label>Email</label><input id=ae type=email><label>Password</label><input id=ap2 type=password><button class=b3 onclick="alog()">Login</button><button onclick="go('#/')">‹ Home</button>`};
+async function alog(){if(locked()||!A)return;try{const c=await A.signInWithEmailAndPassword(v('ae').trim(),v('ap2'));if((c.user.email||'').toLowerCase()!==ADM){await A.signOut();return bad('Login failed: not an admin account')}me=c.user;toast('Login successful');render()}catch(x){bad(authMsg(x))}}
+async function delSc(i){if(!confirm('Delete this school and everything in it?'))return;try{const q=await fs.collection('cap').where('sid','==',i).get();await Promise.all(q.docs.map(d=>d.ref.delete()));await fs.collection('schools').doc(i).delete();await fs.collection('pub').doc(i).delete();D.schools=D.schools.filter(x=>x.id!==i);toast('School deleted')}catch(x){er(x)}render()}
+/* teachers, learners, passwords */
+async function addT(){const s=cur(),m=v('te').trim().toLowerCase();if(!okE(m))return toast('Enter a valid email',1);if(!strong(v('tw')))return toast('Password: '+WK,1);if(!v('ts').trim())return toast('Enter the subjects this teacher may edit',1);if(s.tc.some(t=>t.e===m))return toast('Teacher already added',1);
+ const sa=SEC||(SEC=firebase.initializeApp(FB,'sec')),sub=v('ts').trim(),cl=[...document.querySelectorAll('.tcl:checked')].map(x=>x.value);let u;
+ try{u=(await sa.auth().createUserWithEmailAndPassword(m,v('tw'))).user;await sa.auth().signOut()}catch(x){return toast(x.code==='auth/email-already-in-use'?'That email already has an account':'Could not create the teacher account',1)}
+ s.tc.push({e:m,uid:u.uid,sub,cl});s.members=[...s.members,u.uid];save();toast('Teacher added');render()}
+function rmT(m){const s=cur(),t=s.tc.find(x=>x.e===m);s.tc=s.tc.filter(x=>x.e!==m);if(t)s.members=s.members.filter(x=>x!==t.uid);save();toast('Teacher removed');render()}
+async function addS(c){const s=cur(),p=v('sp2').trim();if(!v('sn').trim())return toast('Enter the learner name',1);if(p.length<6)return toast('Passcode needs 6+ characters',1);if(s.stu.some(x=>x.c===H(p))||H(p)===s.sp)return toast('That passcode is already used',1);s.stu.push({id:uid(),n:v('sn').trim(),c0:c,c:H(p),k:await sha(s.id+':'+p)});save();toast('Learner registered');render()}
+function delSt(i){if(!confirm('Delete this learner and their reports?'))return;const s=cur(),t=s.stu.find(x=>x.id===i);if(t&&t.k&&fs)fs.collection('cap').doc(s.id+'_'+t.k).delete().catch(er);s.stu=s.stu.filter(x=>x.id!==i);s.rep=s.rep.filter(r=>r.stu!==i);save();toast('Learner deleted');render()}
+function pw(s){return`<h2>Passwords</h2><div class=cd><label>New school access passcode</label><input id=p1 type=password><button class=b onclick="chP()">Save passcode</button></div><div class=cd><p class=mu>To change your login password, we email you a reset link.</p><button onclick="fg2()">Email me a reset link</button></div>`}
+function fg2(){A.sendPasswordResetEmail(cur().em).then(()=>toast('Reset link sent'),er)}
+function chP(){const s=cur();if(v('p1').length<6)return toast('Passcode needs 6+ characters',1);s.sp=H(v('p1'));save();toast('Passcode saved')}
+fbStart();render();
 </script></body></html>
