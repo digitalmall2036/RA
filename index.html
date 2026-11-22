@@ -316,4 +316,10 @@ function pw(s){return`<h2>Passwords</h2><div class=cd><label>New school access p
 function fg2(){A.sendPasswordResetEmail(cur().em).then(()=>toast('Reset link sent'),er)}
 function chP(){const s=cur();if(v('p1').length<6)return toast('Passcode needs 6+ characters',1);s.sp=H(v('p1'));save();toast('Passcode saved')}
 fbStart();render();
+</script><script>
+/* layout sector without image upload or analyser */
+function ly(s){const c=s.rc.find(x=>x.id===ui.lc);
+ if(!c)return`<h2>Report Layouts</h2>`+(s.rc.map(c=>`<div class=app onclick="ui.lc='${c.id}';render()"><i>🖼️</i>${e(c.n)}${c.L?'<em>✓</em>':''}</div>`).join('')||'<p class=mu>Add a report category first.</p>');
+ const L=LY(c);
+ return`<button onclick="ui.lc=null;render()">‹ Layouts</button><h2>${e(c.n)}</h2><p class=mu>Set up the boxes of this report. School name, badge, learner, class and term are added automatically.</p><label>Report title</label><input id=lt value="${e(L.title)}"><label>Extra learner details (comma separated)</label><input id=lh value="${e(L.head.join(', '))}"><label>Columns (first is the marks column)</label><input id=lc value="${e(L.cols.join(', '))}"><label>Subjects (one per line)</label><textarea id=lr rows=7>${e(L.rows.join('\n'))}</textarea><label>Summary rows, one per line: Label=sum, Label=count, Label=avg, or just Label to type it in</label><textarea id=ls rows=6>${e(L.sum.map(x=>x.l+(x.t?'='+x.t:'')).join('\n'))}</textarea><button class=b onclick="saveL()">Save layout</button>`}
 </script></body></html>
